@@ -1,0 +1,42 @@
+/* Style for the profile section */
+.profile {
+    width: 500px !important;
+    height: 150px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: linear-gradient(to right, #6a11cb, #2575fc) !important;
+    overflow: hidden !important;
+}
+
+/* Font color and font family */
+.custom-text {
+    color: #4c045e; /* Font color */
+    font-family: 'Arial', sans-serif; /* Font family */
+    font-size: 18px;
+    text-align: center;
+}
+
+/* Div positioning */
+.positioned-div {
+    position: absolute;
+    top: 50px;
+    left: 50px;
+    background-color: #f0f8ff;
+    padding: 20px;
+    border: 2px solid #6a11cb;
+}
+
+/* Another div style */
+.centered-div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    width: 300px;
+    background-color: #e6e6fa;
+    border-radius: 10px;
+    margin: 20px auto;
+}

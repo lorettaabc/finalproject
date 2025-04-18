@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Page</title>
+    <link href="../css/styles.css" rel="stylesheet">
+    <style>
+        /* Center everything on the page */
+        body {
+            background-color: #a37cf65b; /* Light blue background */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh; /* Ensure the body takes up the full viewport height */
+            margin: 0;
+            padding: 20px;
+        }
+
+        .custom-section {
+            padding: 20px;
+            background: url('../assets/custom-background.jpg') center/cover no-repeat; /* Custom background image */
+            color: rgb(76, 4, 94);
+            text-align: center;
+            margin-top: 5px;
+        }
+
+        ol {
+            margin-bottom: 20px;
+        }
+
+        iframe {
+            margin-bottom: 20px;
+        }
+
+        img {
+            margin-bottom: 20px;
+        }
+
+        .top-right-link {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 16px;
+            text-decoration: none;
+            color: #01060b; 
+        }
+
+        .top-right-link:hover {
+            text-decoration: underline;
+        }
+
+        .image-list-container {
+            display: flex;
+            align-items: flex-start; /* Align items at the top */
+            gap: 20px; /* Space between the image and the list */
+        }
+
+        .image-list-container img {
+            width: 150px; /* Make the image smaller */
+            height: auto; /* Maintain aspect ratio */
+        }
+
+        .image-list-container ol {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Link to the Other Index Page -->
+    <a href="../index.html" class="top-right-link">Go to Home Page</a>
+
+    <!-- Custom Background Section -->
+    <div class="custom-section">
+        <h1>Welcome to My Custom Scratch Page</h1>
+    </div>
+
+    <!-- On-page Anchor -->
+    <a href="#bottom-section">Jump to Bottom</a>
+
+    <!-- Flexbox Container for Image and List -->
+    <div class="image-list-container">
+        <img src="../assets/profile.png" alt="Custom Image">
+        <ol>
+            <li>A Little Bit About Me</li>
+            <ul>
+                <li>19 Years Old</li>
+                <li>Bilingual</li>
+                <li>First Generation Student</li>
+                <li>Accounting Major at BYU</li>
+                <li>Hobbies</li>
+                <ul>
+                    <li>Reading</li>
+                    <li>Baking</li>
+                    <li>Traveling</li>
+                    <li>Shopping</li>
+                    <li>Getting my nails done</li>
+                    <li>Going Swing Dancing</li>
+                    <li>Watching Movies</li>
+                </ul>
+            </ul>
+        </ol>
+    </div>
+
+    <!-- Embedded YouTube Video -->
+        <div id="video-section">
+        <h4>One of My Favorite Hobbies:</h4>
+        <iframe width="560" height="315" src="https://www.youtube.com/embed/_owoRJON-Yk?si=hEOBuSHKXL5h9BfF" 
+            title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; 
+            encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" 
+            allowfullscreen></iframe>
+    </div>
+    
+    <!-- Tableau Embed Section -->
+    <div id="tableau-section">
+        <h4>My Tableau Visualization:</h4>
+        <div class='tableauPlaceholder' id='viz1745009648620' style='position: relative'>
+            <noscript>
+                <a href='#'>
+                    <img alt='Calorie Burn' src='https://public.tableau.com/static/images/Da/DancingDatabase/CalorieBurn/1_rss.png' style='border: none' />
+                </a>
+            </noscript>
+            <object class='tableauViz' style='display:none;'>
+                <param name='host_url' value='https%3A%2F%2Fpublic.tableau.com%2F' />
+                <param name='embed_code_version' value='3' />
+                <param name='site_root' value='' />
+                <param name='name' value='DancingDatabase/CalorieBurn' />
+                <param name='tabs' value='no' />
+                <param name='toolbar' value='yes' />
+                <param name='static_image' value='https://public.tableau.com/static/images/Da/DancingDatabase/CalorieBurn/1.png' />
+                <param name='animate_transition' value='yes' />
+                <param name='display_static_image' value='yes' />
+                <param name='display_spinner' value='yes' />
+                <param name='display_overlay' value='yes' />
+                <param name='display_count' value='yes' />
+                <param name='language' value='en-US' />
+            </object>
+        </div>
+        <script type='text/javascript'>
+            var divElement = document.getElementById('viz1745009648620');
+            var vizElement = divElement.getElementsByTagName('object')[0];
+            vizElement.style.minWidth = '420px';
+            vizElement.style.maxWidth = '1250px';
+            vizElement.style.width = '100%';
+            vizElement.style.minHeight = '100%';
+            vizElement.style.maxHeight = '100%';
+            vizElement.style.height = (divElement.offsetWidth * 0.75) + 'px';
+            var scriptElement = document.createElement('script');
+            scriptElement.src = 'https://public.tableau.com/javascripts/api/viz_v1.js';
+            vizElement.parentNode.insertBefore(scriptElement, vizElement);
+        </script>
+    </div>
+    <div id="snake-game-section">
+        <h4>Play the Snake Game:</h4>
+        <iframe src="game.html" width="600" height="600" frameborder="0" style="border: 5px solid black; border-radius: 10px;">
+            Your browser does not support iframes.
+        </iframe>
+    </div>
+</body>
+<div id="bottom-section"></div>
+</html>

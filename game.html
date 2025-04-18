@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        /* Basic styling and centering */
+        body {
+            display: flex;
+            flex-direction: column; /* Stack elements vertically */
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #FFD1DC; /* Pink background */
+            font-family: 'Press Start 2P', cursive; /* Retro font */
+            color: black; /* Black text */
+        }
+
+        h1 {
+            margin-bottom: 10px;
+            color: black; /* Black title */
+        }
+
+        /* Container for Score and Lives */
+        #game-info {
+            display: flex; /* Arrange score and lives side-by-side */
+            justify-content: space-around; /* Space them out */
+            width: 300px; /* Give it some width */
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            color: black; /* Ensure info text is black */
+        }
+
+        #score-display, #lives-display {
+             text-align: center;
+        }
+
+        #score {
+            color: black; /* Black score text */
+            margin-left: 5px; /* Space after label */
+        }
+        #lives {
+            color: black; /* Black lives text */
+            margin-left: 5px; /* Space after label */
+        }
+
+
+        /* Style the canvas (game area) */
+        #gameCanvas {
+            border: 5px solid black; /* Black border */
+            background-color: white; /* White canvas background */
+            display: block; /* Prevents extra space below canvas */
+            margin: 10px auto; /* Center horizontally, add margin */
+            border-radius: 5px; /* Slightly rounded corners */
+        }
+
+        /* Styling for buttons */
+        button {
+             font-family: 'Press Start 2P', cursive; /* Retro font */
+             font-size: 1em; /* Slightly larger base size */
+             padding: 12px 18px;
+             margin-top: 15px;
+             cursor: pointer;
+             background-color: #FF69B4; /* Hot Pink button background */
+             border: none;
+             border-radius: 5px;
+             color: black; /* Black button text */
+             box-shadow: 0 4px #D1007F; /* Darker Hot Pink shadow */
+             transition: background-color 0.2s, box-shadow 0.2s, transform 0.1s;
+        }
+         button:active {
+             box-shadow: 0 2px #D1007F; /* Darker Hot Pink shadow */
+             transform: translateY(2px);
+         }
+
+         /* Specific style for smaller button in game over */
+         #game-over button {
+             font-size: 0.8em;
+             padding: 10px 15px;
+         }
+
+         /* Style for game over message */
+        #game-over {
+            position: absolute; /* Position over the canvas */
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: black; /* Black text */
+            font-size: 2em;
+            text-align: center;
+            background-color: rgba(44, 62, 80, 0.8); /* Keep dark semi-transparent background */
+            padding: 20px;
+            border-radius: 10px;
+            display: none; /* Hidden by default */
+            z-index: 10; /* Ensure it's on top */
+        }
+
+         /* Style for temporary messages (like losing a life) */
+         #message-overlay {
+            position: absolute;
+            top: 45%; /* Adjust position slightly */
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: black; /* Black text */
+            font-size: 1.5em;
+            text-align: center;
+            background-color: rgba(44, 62, 80, 0.7); /* Keep dark semi-transparent background */
+            padding: 15px;
+            border-radius: 8px;
+            display: none; /* Hidden by default */
+            z-index: 9; /* Below game over, above canvas */
+         }
+
+    </style>
+</head>
+<body>
+
+    <h1>SNAKE!</h1>
+
+    <div id="game-info">
+        <div id="score-display">Score:<span id="score">0</span></div>
+        <div id="lives-display">Lives:<span id="lives">3</span></div>
+    </div>
+
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+
+    <button id="start-button">Start Game</button>
+
+    <div id="game-over">
+        GAME OVER!
+        <br>
+        Final Score: <span id="final-score">0</span>
+        <br>
+        <button id="restart-button">Restart</button>
+    </div>
+
+    <div id="message-overlay"></div>
+
+    <script>
+        // --- Game Setup ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d'); // Context for drawing
+        const scoreElement = document.getElementById('score');
+        const livesElement = document.getElementById('lives'); // Get lives element
+        const gameOverElement = document.getElementById('game-over');
+        const finalScoreElement = document.getElementById('final-score');
+        const restartButton = document.getElementById('restart-button');
+        const messageOverlay = document.getElementById('message-overlay'); // Get message overlay
+        const startButton = document.getElementById('start-button'); // Get start button
+
+        // Game grid configuration
+        const gridSize = 20; // Size of each grid cell in pixels
+        const tileCountX = canvas.width / gridSize; // Number of cells horizontally
+        const tileCountY = canvas.height / gridSize; // Number of cells vertically
+
+        // --- Game State Variables ---
+        let snake = []; // Array of {x, y} objects for snake segments
+        let dx = 0; // Horizontal velocity (1: right, -1: left, 0: none)
+        let dy = 0; // Vertical velocity (1: down, -1: up, 0: none)
+        let food = { x: 0, y: 0 }; // Food position {x, y}
+        let score = 0;
+        let lives = 3; // Player lives
+        let changingDirection = false; // Lock to prevent rapid 180 turns
+        let gameLoopTimeout; // Variable to hold the timeout ID for the game loop
+        let isGameOver = false; // True only when all lives are lost
+        let isPaused = false; // Flag to indicate if game is paused (e.g., after losing a life)
+        let gameStarted = false; // Flag to check if the game loop has begun
+
+        // --- Difficulty Settings ---
+        const initialSpeed = 150; // Starting speed (milliseconds delay)
+        const minSpeed = 50;      // Maximum speed (minimum delay)
+        const speedIncrement = 5; // How much to decrease delay per food item
+        let currentGameSpeed;     // Current delay, updated during gameplay
+
+        // Colors (Snake/Food colors remain unchanged)
+        const snakeColor = '#2ecc71'; // Green snake
+        const foodColor = '#e74c3c'; // Red food
+        const headColor = '#27ae60'; // Darker green for head
+
+
+        // --- Drawing Functions ---
+
+        // Clears the entire canvas
+        function clearCanvas() {
+            ctx.fillStyle = 'white'; // Clear canvas to white
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // Draws a single segment (snake or food)
+        function drawRect(x, y, color) {
+            ctx.fillStyle = color;
+            // Multiply by gridSize for pixel coordinates, leave small gap
+            ctx.fillRect(x * gridSize + 1, y * gridSize + 1, gridSize - 2, gridSize - 2);
+            // Use a light gray stroke for slight separation on white background
+            ctx.strokeStyle = '#DDDDDD';
+            ctx.strokeRect(x * gridSize + 1, y * gridSize + 1, gridSize - 2, gridSize - 2);
+        }
+
+        // Draws the entire snake
+        function drawSnake() {
+            // Only draw if snake array is initialized
+            if (snake.length === 0) return;
+            snake.forEach((segment, index) => {
+                // Draw head differently
+                const color = (index === 0) ? headColor : snakeColor;
+                drawRect(segment.x, segment.y, color);
+            });
+        }
+
+        // Draws the food
+        function drawFood() {
+            // Only draw if food object is initialized
+             if (!food) return;
+            drawRect(food.x, food.y, foodColor);
+        }
+
+        // Updates the score display
+        function drawScore() {
+            scoreElement.textContent = score;
+        }
+
+        // Updates the lives display
+        function drawLives() {
+            livesElement.textContent = lives;
+        }
+
+        // Shows the *Final* Game Over screen
+        function showGameOver() {
+            isGameOver = true; // Set final game over state
+            gameStarted = false; // Game is no longer considered active
+            clearTimeout(gameLoopTimeout); // Stop the game loop
+            finalScoreElement.textContent = score;
+            gameOverElement.style.display = 'block'; // Show the message box
+            startButton.style.display = 'none'; // Keep start button hidden
+        }
+
+        // Hides the Final Game Over screen
+        function hideGameOver() {
+            gameOverElement.style.display = 'none'; // Hide the message box
+        }
+
+        // Shows a temporary message
+        function showTemporaryMessage(message, duration = 1500) {
+             messageOverlay.textContent = message;
+             messageOverlay.style.display = 'block';
+             setTimeout(() => {
+                 messageOverlay.style.display = 'none';
+             }, duration);
+        }
+
+
+        // --- Game Logic Functions ---
+
+        // Resets snake position (used initially and after losing a life)
+        function resetSnakeState() {
+             // Initial snake position (center)
+            const startX = Math.floor(tileCountX / 2);
+            const startY = Math.floor(tileCountY / 2);
+            snake = [
+                { x: startX, y: startY },      // Head
+                { x: startX - 1, y: startY }, // Body segment 1
+                { x: startX - 2, y: startY }  // Body segment 2
+            ];
+             // Keep current food, score, and speed unless it's a full restart
+        }
+
+        // Resets snake direction (used initially and after losing a life)
+        function resetSnakeDirection() {
+            // Reset movement direction (e.g., right)
+            dx = 1;
+            dy = 0;
+        }
+
+
+        // Moves the snake one step
+        function moveSnake() {
+            // Don't move if game is finally over or paused between lives or not started
+            if (isGameOver || isPaused || !gameStarted) return;
+
+            // Calculate new head position based on velocity (dx, dy)
+            const head = { x: snake[0].x + dx, y: snake[0].y + dy };
+
+            // Add the new head to the beginning of the snake array
+            snake.unshift(head);
+
+            // Check if snake ate the food
+            const ateFood = (head.x === food.x && head.y === food.y);
+
+            if (ateFood) {
+                score += 10; // Increase score
+                drawScore(); // Update score display immediately
+                generateFood(); // Generate new food
+
+                // Increase speed (decrease delay)
+                if (currentGameSpeed > minSpeed) {
+                    currentGameSpeed = Math.max(minSpeed, currentGameSpeed - speedIncrement);
+                    // console.log("Speed increased. New delay:", currentGameSpeed); // For debugging
+                }
+                // Don't remove tail segment - snake grows
+            } else {
+                // Remove the last segment of the snake's tail
+                snake.pop();
+            }
+        }
+
+        // Generates food at a random location not occupied by the snake
+        function generateFood() {
+            let newFoodPosition;
+            do {
+                newFoodPosition = {
+                    x: Math.floor(Math.random() * tileCountX),
+                    y: Math.floor(Math.random() * tileCountY)
+                };
+                // Ensure snake array exists before checking
+            } while (snake && snake.length > 0 && isFoodOnSnake(newFoodPosition));
+
+            food = newFoodPosition;
+        }
+
+        // Helper function to check if a position is occupied by the snake
+        function isFoodOnSnake(position) {
+            // Ensure snake array exists
+            if (!snake || snake.length === 0) return false;
+            return snake.some(segment => segment.x === position.x && segment.y === position.y);
+        }
+
+        // Checks for collisions (wall or self)
+        function checkCollision() {
+            // Don't check if game over, paused, or not started
+            if (isGameOver || isPaused || !gameStarted) return false;
+
+            // Ensure snake exists and has a head
+            if (!snake || snake.length === 0) return false;
+
+            const head = snake[0];
+            let collisionDetected = false;
+
+            // Wall collision
+            if (head.x < 0 || head.x >= tileCountX || head.y < 0 || head.y >= tileCountY) {
+                console.log("Collision: Wall");
+                collisionDetected = true;
+            }
+
+            // Self collision (check if head position matches any other segment)
+            // Start check from index 1 (ignore the head itself)
+            for (let i = 1; i < snake.length; i++) {
+                if (head.x === snake[i].x && head.y === snake[i].y) {
+                    console.log("Collision: Self");
+                    collisionDetected = true;
+                    break; // Exit loop once collision is found
+                }
+            }
+
+            if (collisionDetected) {
+                handleCollision(); // Handle the collision (deduct life, etc.)
+                return true; // Indicate collision occurred
+            }
+
+            return false; // No collision
+        }
+
+        // Handles the consequences of a collision
+        function handleCollision() {
+            lives--; // Deduct a life
+            drawLives(); // Update display
+            clearTimeout(gameLoopTimeout); // Stop the current loop
+            gameStarted = false; // Temporarily stop game logic (movement) during pause
+
+            if (lives <= 0) {
+                // All lives lost - Final Game Over
+                showGameOver();
+            } else {
+                // Lives remaining - Pause, reset snake, restart loop
+                isPaused = true; // Set paused state
+                showTemporaryMessage(`CRASH! ${lives} ${lives === 1 ? 'life' : 'lives'} left!`, 2000); // Show message
+                console.log(`Collision! Lives remaining: ${lives}. Pausing...`);
+
+                // After a delay, reset snake and resume
+                setTimeout(() => {
+                    resetSnakeState(); // Reset snake position
+                    resetSnakeDirection(); // Reset snake direction
+                    isPaused = false; // Unpause
+                    gameStarted = true; // Allow game logic to resume
+                    console.log("Resuming game loop...");
+                    gameLoop(); // Restart the game loop
+                }, 2000); // 2 second pause
+            }
+        }
+
+
+        // Handles keyboard input to change direction
+        function changeDirection(event) {
+            // Use constants for key codes for readability
+            const KEY_LEFT = 37;
+            const KEY_UP = 38;
+            const KEY_RIGHT = 39;
+            const KEY_DOWN = 40;
+
+            // Ignore input if game is over, paused, or already changing direction, or not started
+            if (isGameOver || isPaused || changingDirection || !gameStarted) return;
+
+            changingDirection = true; // Lock direction change for this frame
+
+            const keyPressed = event.keyCode;
+
+            // Prevent reversing direction
+            const goingUp = dy === -1;
+            const goingDown = dy === 1;
+            const goingLeft = dx === -1;
+            const goingRight = dx === 1;
+
+            // Only change direction if it's not a 180-degree turn
+            if (keyPressed === KEY_LEFT && !goingRight) { dx = -1; dy = 0; }
+            else if (keyPressed === KEY_UP && !goingDown) { dx = 0; dy = -1; }
+            else if (keyPressed === KEY_RIGHT && !goingLeft) { dx = 1; dy = 0; }
+            else if (keyPressed === KEY_DOWN && !goingUp) { dx = 0; dy = 1; }
+            else {
+                // If invalid key or 180 turn attempted, unlock direction change immediately
+                 changingDirection = false;
+            }
+        }
+
+
+        // --- Game Loop ---
+
+        // The main function that runs the game cycle
+        function gameLoop() {
+             // If paused or game over, don't run the loop logic
+             if (isPaused || isGameOver) return;
+
+             // Reset the direction change lock at the beginning of each frame
+            changingDirection = false;
+
+            // --- Update State ---
+            moveSnake(); // Move snake first (updates position, handles eating)
+
+            // --- Check for Collision ---
+            if (checkCollision()) {
+                 // If collision detected and handled, stop this iteration.
+                 // handleCollision takes care of stopping/restarting the loop.
+                 return;
+            }
+
+
+            // --- Draw Frame ---
+            clearCanvas(); // Clear previous frame
+            drawFood();    // Draw food
+            drawSnake();   // Draw snake in new position
+            // Score and Lives are updated when events occur (eating, collision)
+
+            // --- Schedule Next Frame ---
+            // Repeat the loop after the current speed delay ONLY if game is active
+             if (gameStarted && !isPaused && !isGameOver) {
+                 gameLoopTimeout = setTimeout(gameLoop, currentGameSpeed);
+             }
+        }
+
+
+        // --- Initialization and Start ---
+
+        // Sets up the initial static display before the game starts
+        function initializeDisplay() {
+            console.log("Initializing display...");
+            gameStarted = false; // Ensure game isn't marked as started
+            isGameOver = false;
+            isPaused = false;
+            hideGameOver();
+            messageOverlay.style.display = 'none';
+            startButton.style.display = 'block'; // Show start button
+
+            // Reset visual elements
+            score = 0;
+            lives = 3;
+            currentGameSpeed = initialSpeed;
+            drawScore();
+            drawLives();
+            resetSnakeState(); // Set initial snake position
+            generateFood();    // Set initial food position
+
+            // Draw the static initial frame
+            clearCanvas();
+            drawFood();
+            drawSnake();
+            console.log("Display initialized. Press Start Game.");
+        }
+
+
+        // Starts/Restarts the actual game logic and loop
+        function startGame() {
+            console.log("Starting game...");
+            startButton.style.display = 'none'; // Hide start button
+            hideGameOver(); // Ensure game over screen is hidden
+            messageOverlay.style.display = 'none'; // Ensure temp messages are hidden
+
+            // Reset core game state variables (important for restarts)
+            score = 0;
+            lives = 3;
+            isGameOver = false;
+            isPaused = false;
+            currentGameSpeed = initialSpeed;
+            drawScore();
+            drawLives();
+
+            // Reset snake position and direction
+            resetSnakeState();
+            resetSnakeDirection(); // Set initial direction
+
+            // Place initial food (or new food for restart)
+            generateFood();
+
+            // Mark game as started and begin the loop
+            gameStarted = true;
+            clearTimeout(gameLoopTimeout); // Clear any lingering loops
+            console.log("Starting game loop...");
+            gameLoop();
+        }
+
+        // --- Event Listeners ---
+        document.addEventListener('keydown', changeDirection);
+        startButton.addEventListener('click', startGame); // Start game on button click
+        restartButton.addEventListener('click', startGame); // Restart game on button click
+
+        // --- Initial Setup on Load ---
+        // Call initializeDisplay when the script loads to set up the static view
+        window.onload = initializeDisplay;
+
+    </script>
+
+</body>
+</html>
